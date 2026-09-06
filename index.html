@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matematika - Milliy Sertifikat</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; padding: 20px; margin: 0; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .timer { font-size: 28px; font-weight: bold; color: #d9534f; }
+        .question-box { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Matematika Testi</h2>
+        <div class="timer" id="time">02:00:00</div>
+    </div>
+    
+    <form id="testForm">
+        <div id="questions-container"></div>
+        <button type="button" class="submit-btn" onclick="submitTest()">Javoblarni yuborish</button>
+    </form>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // 45 ta savol uchun maydonlarni avtomatik yaratish
+        const container = document.getElementById('questions-container');
+        for (let i = 1; i <= 45; i++) {
+            container.innerHTML += `
+                <div class="question-box">
+                    <label><b>${i}-savol javobi:</b></label>
+                    <input type="text" name="q${i}" placeholder="A, B, C, D yoki ochiq javob" required>
+                </div>
+            `;
+        }
+
+        // Taymer (Vaqtinchalik lokal taymer, keyin serverga bog'laymiz)
+        let timeInSeconds = 7200; // 2 soat
+        let timerElement = document.getElementById('time');
+
+        let timer = setInterval(function() {
+            timeInSeconds--;
+            let h = Math.floor(timeInSeconds / 3600);
+            let m = Math.floor((timeInSeconds % 3600) / 60);
+            let s = timeInSeconds % 60;
+            
+            timerElement.textContent = 
+                (h < 10 ? "0" + h : h) + ":" + 
+                (m < 10 ? "0" + m : m) + ":" + 
+                (s < 10 ? "0" + s : s);
+
+            if (timeInSeconds <= 0) {
+                clearInterval(timer);
+                submitTest();
+            }
+        }, 1000);
+
+        function submitTest() {
+            let form = document.getElementById('testForm');
+            let formData = new FormData(form);
+            let answers = {};
+            formData.forEach((value, key) => { answers[key] = value.toUpperCase(); });
+            
+            tg.sendData(JSON.stringify(answers));
+            tg.close();
+        }
+    </script>
+</body>
+</html>
