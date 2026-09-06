@@ -10,8 +10,9 @@
         .header { text-align: center; margin-bottom: 20px; }
         .timer { font-size: 28px; font-weight: bold; color: #d9534f; }
         .question-box { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .submit-btn { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+        input, select { width: 100%; padding: 10px; margin-top: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        .submit-btn { width: 100%; padding: 15px; background-color: #0088cc; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        .section-title { margin-top: 25px; margin-bottom: 10px; color: #333; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -21,7 +22,12 @@
     </div>
     
     <form id="testForm">
-        <div id="questions-container"></div>
+        <div class="section-title"><b>I qism. Yopiq testlar (1-35)</b></div>
+        <div id="closed-questions"></div>
+
+        <div class="section-title"><b>II qism. Ochiq testlar (36-45)</b></div>
+        <div id="open-questions"></div>
+
         <button type="button" class="submit-btn" onclick="submitTest()">Javoblarni yuborish</button>
     </form>
 
@@ -29,19 +35,37 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // 45 ta savol uchun maydonlarni avtomatik yaratish
-        const container = document.getElementById('questions-container');
-        for (let i = 1; i <= 45; i++) {
-            container.innerHTML += `
+        const closedContainer = document.getElementById('closed-questions');
+        const openContainer = document.getElementById('open-questions');
+
+        // 1 dan 35 gacha variantli (yopiq) savollar
+        for (let i = 1; i <= 35; i++) {
+            closedContainer.innerHTML += `
                 <div class="question-box">
-                    <label><b>${i}-savol javobi:</b></label>
-                    <input type="text" name="q${i}" placeholder="A, B, C, D yoki ochiq javob" required>
+                    <label><b>${i}-savol:</b></label>
+                    <select name="q${i}" required>
+                        <option value="" disabled selected>Variantni tanlang</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
                 </div>
             `;
         }
 
-        // Taymer (Vaqtinchalik lokal taymer, keyin serverga bog'laymiz)
-        let timeInSeconds = 7200; // 2 soat
+        // 36 dan 45 gacha ochiq savollar
+        for (let i = 36; i <= 45; i++) {
+            openContainer.innerHTML += `
+                <div class="question-box">
+                    <label><b>${i}-savol:</b></label>
+                    <input type="text" name="q${i}" placeholder="Aniq javobni kiriting (masalan: 12.5)" required>
+                </div>
+            `;
+        }
+
+        // Taymer mantiqi
+        let timeInSeconds = 7200; 
         let timerElement = document.getElementById('time');
 
         let timer = setInterval(function() {
@@ -65,7 +89,11 @@
             let form = document.getElementById('testForm');
             let formData = new FormData(form);
             let answers = {};
-            formData.forEach((value, key) => { answers[key] = value.toUpperCase(); });
+            
+            // Javoblarni yig'ish va katta harfga o'tkazish
+            formData.forEach((value, key) => { 
+                answers[key] = value.trim().toUpperCase(); 
+            });
             
             tg.sendData(JSON.stringify(answers));
             tg.close();
