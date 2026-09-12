@@ -9,7 +9,7 @@
 </head>
 <body class="bg-gray-50 flex flex-col md:flex-row min-h-screen">
     
-    <!-- Mobil uchun yuqori panel va Burger menyu -->
+    <!-- Mobil uchun yuqori panel -->
     <header class="bg-indigo-900 text-white p-4 flex justify-between items-center md:hidden">
         <h2 class="text-xl font-bold">LMS Admin</h2>
         <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-indigo-800 focus:outline-none">
@@ -19,14 +19,14 @@
         </button>
     </header>
 
-    <!-- Sidebar (Yon panel - telefonlarda yashirin bo'ladi, tugma bosganda chiqadi) -->
+    <!-- Sidebar -->
     <aside id="sidebar" class="w-64 bg-indigo-900 text-white p-6 hidden md:block fixed md:static inset-y-0 left-0 z-50 transition-all duration-300">
         <div class="flex justify-between items-center mb-10">
             <h2 class="text-2xl font-bold tracking-wide">LMS Admin</h2>
             <button onclick="toggleSidebar()" class="md:hidden text-white">✕</button>
         </div>
         <nav class="space-y-3">
-            <a href="#" class="block py-2.5 px-4 rounded-lg bg-indigo-700 font-medium">📊 Natijalar va Tahlil</a>
+            <a href="#" class="block py-2.5 px-4 rounded-lg bg-indigo-700 font-medium">📊 Boshqaruv va Natijalar</a>
         </nav>
     </aside>
 
@@ -37,25 +37,53 @@
             <button onclick="loadData()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm text-center">Ma'lumotlarni Yangilash 🔄</button>
         </div>
 
-        <!-- Yangi test yaratish formasi -->
+        <!-- 1. GURUH YARATISH BO'LIMI -->
         <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
-            <h2 class="text-lg font-bold mb-4 text-gray-700">📝 Yangi Test Yaratish va Faollashtirish</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full">
-                <input type="number" id="closedCount" placeholder="Yopiq savollar soni (35)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="35">
-                <input type="number" id="openCount" placeholder="Ochiq savollar soni (10)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="10">
+            <h2 class="text-lg font-bold mb-4 text-gray-700">👥 Yangi Guruh Qo'shish</h2>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="groupName" placeholder="Guruh nomi (masalan: Nukus Fiz-Mat 10-sinf)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1">
+                <button onclick="createGroup()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">Guruh qo'shish ➕</button>
             </div>
-            <textarea id="testKeys" placeholder="To'g'ri kalitlarni probel bilan kiriting (Masalan: A B C D ... 12 15)" class="w-full border border-gray-200 p-3 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
-            <button onclick="createTest()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition shadow-sm">Testni Saqlash va Faollashtirish 🚀</button>
+            <div id="groupsList" class="flex flex-wrap gap-2 mt-4">
+                <!-- Guruhlar shu yerga chiqadi -->
+            </div>
         </div>
 
-        <!-- Natijalar bo'limi -->
+        <!-- 2. YANGI TEST YARATISH VA KATAKLI KALITLAR -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-lg font-bold mb-4 text-gray-700">📝 Yangi Test Yaratish va Kalitlarni Belgilash</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:col-span-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Yopiq savollar soni:</label>
+                    <input type="number" id="closedCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="35">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">Ochiq savollar soni:</label>
+                    <input type="number" id="openCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="10">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="generateKeyInputs()" class="w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-black transition">Kataklarni Hosil Qilish ⚙️</button>
+                </div>
+            </div>
+
+            <!-- Dinamik katakli kalitlar maydoni -->
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">To'g'ri javoblar kataklari:</label>
+                <div id="keysContainer" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-9 gap-3 max-h-64 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50">
+                    <!-- Kataklar shu yerga avtomatik chiqadi -->
+                </div>
+            </div>
+
+            <button onclick="createTest()" class="w-full bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition shadow-sm">Testni Saqlash va Faollashtirish 🚀</button>
+        </div>
+
+        <!-- 3. NATIJALAR JADVALI -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
                 <h3 class="text-lg font-bold text-gray-700">O'quvchilar Natijalari</h3>
                 <span id="totalCount" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">Jami: 0 ta</span>
             </div>
-            <!-- Mobil ekranlar uchun jadval gorizontal o'raladi (scroll bo'ladi) -->
             <div class="overflow-x-auto">
                 <table class="min-w-full text-left border-collapse">
                     <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
@@ -79,12 +107,127 @@
         const SUPABASE_KEY = "sb_publishable_1zHi0RhZgvwJulz9y3Rzhg_CAmS-uZS";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Mobil sidebar ochib-yopish funksiyasi
         function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('hidden');
+            document.getElementById('sidebar').classList.toggle('hidden');
         }
 
+        // Sahifa ochilganda kataklarni va guruhlarni yuklash
+        window.onload = function() {
+            generateKeyInputs();
+            loadGroups();
+            loadData();
+        }
+
+        // Savollar soniga qarab qulay tanlov kataklarini yaratish
+        function generateKeyInputs() {
+            const closed = parseInt(document.getElementById('closedCount').value) || 0;
+            const open = parseInt(document.getElementById('openCount').value) || 0;
+            const total = closed + open;
+            const container = document.getElementById('keysContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= total; i++) {
+                let isClosed = i <= closed;
+                let html = '';
+                
+                if (isClosed) {
+                    // Yopiq savollar uchun A, B, C, D tanlash tugmalari / select
+                    html = `
+                        <div class="bg-white p-2 rounded-lg border border-gray-200 text-center shadow-xs">
+                            <span class="block text-xs font-bold text-gray-500 mb-1">${i}-savol (Y)</span>
+                            <select id="key_${i}" class="w-full border border-gray-200 rounded p-1 text-center font-bold text-indigo-600 bg-gray-50 focus:outline-none">
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                            </select>
+                        </div>
+                    `;
+                } else {
+                    // Ochiq savollar uchun raqam/javob yozish inputi
+                    html = `
+                        <div class="bg-white p-2 rounded-lg border border-gray-200 text-center shadow-xs">
+                            <span class="block text-xs font-bold text-emerald-600 mb-1">${i}-savol (O)</span>
+                            <input type="text" id="key_${i}" placeholder="Javob" class="w-full border border-gray-200 rounded p-1 text-center font-bold text-emerald-600 bg-gray-50 focus:outline-none">
+                        </div>
+                    `;
+                }
+                container.innerHTML += html;
+            }
+        }
+
+        // Guruh yaratish
+        async function createGroup() {
+            const name = document.getElementById('groupName').value.trim();
+            if (!name) {
+                alert("Iltimos, guruh nomini kiriting!");
+                return;
+            }
+
+            const { error } = await supabaseClient.from('groups').insert({ name: name });
+            if (error) {
+                alert("Xatolik: " + error.message);
+            } else {
+                alert("✅ Guruh muvaffaqiyatli qo'shildi!");
+                document.getElementById('groupName').value = '';
+                loadGroups();
+            }
+        }
+
+        // Guruhlarni yuklab ekranga chiqarish
+        async function loadGroups() {
+            const { data, error } = await supabaseClient.from('groups').select('*').order('id', { ascending: true });
+            const listDiv = document.getElementById('groupsList');
+            if (error || !data) return;
+
+            listDiv.innerHTML = '';
+            data.forEach(g => {
+                listDiv.innerHTML += `<span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-100">📁 ${g.name}</span>`;
+            });
+        }
+
+        // Testni saqlash
+        async function createTest() {
+            const title = document.getElementById('testTitle').value.trim();
+            const closed_count = parseInt(document.getElementById('closedCount').value);
+            const open_count = parseInt(document.getElementById('openCount').value);
+            const total = closed_count + open_count;
+            
+            let keys = [];
+            for (let i = 1; i <= total; i++) {
+                const val = document.getElementById(`key_${i}`).value.trim();
+                if (!val) {
+                    alert(`Diqqat! ${i}-savolning javobi bo'sh qolgan.`);
+                    return;
+                }
+                keys.push(val);
+            }
+
+            if (!title) {
+                alert("Iltimos, test nomini kiriting!");
+                return;
+            }
+
+            await supabaseClient.from('tests').update({ is_active: false }).eq('is_active', true);
+
+            const { error } = await supabaseClient.from('tests').insert({
+                title: title,
+                closed_count: closed_count,
+                open_count: open_count,
+                keys: keys,
+                is_active: true
+            });
+
+            if (error) {
+                alert("Saqlashda xatolik: " + error.message);
+            } else {
+                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi!");
+                document.getElementById('testTitle').value = '';
+                loadData();
+            }
+        }
+
+        // Natijalarni yuklash
         async function loadData() {
             const tbody = document.getElementById('resultsTable');
             const totalCountSpan = document.getElementById('totalCount');
@@ -122,39 +265,6 @@
                 `;
             });
         }
-
-        async function createTest() {
-            const title = document.getElementById('testTitle').value.trim();
-            const closed_count = parseInt(document.getElementById('closedCount').value);
-            const open_count = parseInt(document.getElementById('openCount').value);
-            const keys = document.getElementById('testKeys').value.trim().split(/\s+/);
-
-            if (!title || keys.length !== (closed_count + open_count)) {
-                alert(`Xatolik! Kiritilgan kalitlar soni (${keys.length} ta) jami savollar soniga (${closed_count + open_count} ta) mos kelishi kerak.`);
-                return;
-            }
-
-            await supabaseClient.from('tests').update({ is_active: false }).eq('is_active', true);
-
-            const { error } = await supabaseClient.from('tests').insert({
-                title: title,
-                closed_count: closed_count,
-                open_count: open_count,
-                keys: keys,
-                is_active: true
-            });
-
-            if (error) {
-                alert("Saqlashda xatolik: " + error.message);
-            } else {
-                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi!");
-                document.getElementById('testTitle').value = '';
-                document.getElementById('testKeys').value = '';
-                loadData();
-            }
-        }
-
-        loadData();
     </script>
 </body>
 </html>
