@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Matematika Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 flex">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-indigo-900 text-white min-h-screen p-5">
+        <h2 class="text-2xl font-bold mb-8">Admin Panel</h2>
+        <nav>
+            <a href="#" class="block py-2.5 px-4 rounded bg-indigo-700 font-semibold mb-2">📊 Boshqaruv va Natijalar</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-semibold text-gray-800">Testlarni Boshqarish</h1>
+            <button onclick="loadResults()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700">Natijalarni Yangilash 🔄</button>
+        </div>
+
+        <!-- Yangi test yaratish qismi -->
+        <div class="bg-white p-6 rounded-lg shadow mb-8">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">Yangi Test Yaratish</h2>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border p-2 rounded focus:outline-none focus:border-indigo-600">
+                <input type="number" id="closedCount" placeholder="Yopiq savollar soni (35)" class="border p-2 rounded" value="35">
+                <input type="number" id="openCount" placeholder="Ochiq savollar soni (10)" class="border p-2 rounded" value="10">
+            </div>
+            <textarea id="testKeys" placeholder="To'g'ri kalitlarni probel bilan kiriting (Masalan: A B C D ... 12 15)" class="w-full border p-2 rounded mb-4 focus:outline-none focus:border-indigo-600" rows="3"></textarea>
+            <button onclick="createTest()" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Testni Saqlash va Faollashtirish 🚀</button>
+        </div>
+
+        <!-- Natijalar jadvali -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4 border-b bg-gray-50 font-bold text-gray-700">O'quvchilarning Natijalari</div>
+            <table class="min-w-full">
+                <thead class="bg-gray-50 border-b">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telegram ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To'g'ri / Jami</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Topshirgan vaqti</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200" id="resultsTable">
+                    <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Yuklanmoqda...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // Supabase ulanish ma'lumotlari
+        const SUPABASE_URL = "https://morimienswrvhcctnptt.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_1zHi0RhZgvwJulz9y3Rzhg_CAmS-uZS";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Natijalarni bazadan o'qib jadvalga chiqarish
+        async function loadResults() {
+            const tbody = document.getElementById('resultsTable');
+            tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Yuklanmoqda...</td></tr>`;
+
+            const { data, error } = await supabaseClient.from('test_results').select('*').order('id', { ascending: false });
+            
+            if (error) {
+                alert("Xatolik yuz berdi: " + error.message);
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Hozircha natijalar yo'q.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(res => {
+                tbody.innerHTML = tbody.innerHTML + `
+                    <tr>
+                        <td class="px-6 py-4 text-gray-800">${res.telegram_id}</td>
+                        <td class="px-6 py-4 font-bold text-green-600">${res.correct_count} / ${res.total}</td>
+                        <td class="px-6 py-4 text-gray-500">${new Date(res.submitted_at).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Yangi test yaratish va bazaga yozish
+        async function createTest() {
+            const title = document.getElementById('testTitle').value;
+            const closed_count = parseInt(document.getElementById('closedCount').value);
+            const open_count = parseInt(document.getElementById('openCount').value);
+            const keys = document.getElementById('testKeys').value.trim().split(/\s+/);
+
+            if (!title || keys.length !== (closed_count + open_count)) {
+                alert(`Xato! Kalitlar soni jami savollar soniga (${closed_count + open_count} ta) mos kelishi kerak.`);
+                return;
+            }
+
+            // Avvalgi testlarni o'chirish yoki nofaol qilish
+            await supabaseClient.from('tests').update({ is_active: false }).eq('is_active', true);
+
+            // Yangi testni qo'shish
+            const { error } = await supabaseClient.from('tests').insert({
+                title: title,
+                closed_count: closed_count,
+                open_count: open_count,
+                keys: keys,
+                is_active: true
+            });
+
+            if (error) {
+                alert("Saqlashda xatolik: " + error.message);
+            } else {
+                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi! Endi o'quvchilar testni boshlashlari mumkin.");
+                document.getElementById('testKeys').value = '';
+                document.getElementById('testTitle').value = '';
+            }
+        }
+
+        // Sahifa ochilishi bilan natijalarni yuklash
+        loadResults();
+    </script>
+</body>
+</html>
