@@ -41,10 +41,10 @@
     </div>
     
     <form id="testForm">
-        <div class="section-title"><b>I qism. Yopiq testlar (1-35)</b></div>
+        <div id="closed-section" class="section-title"><b>I qism. Yopiq testlar</b></div>
         <div id="closed-questions"></div>
 
-        <div class="section-title"><b>II qism. Ochiq testlar (36-45)</b></div>
+        <div id="open-section" class="section-title"><b>II qism. Ochiq testlar</b></div>
         <div id="open-questions"></div>
 
         <button type="button" class="submit-btn" onclick="submitTest()">Javoblarni yuborish 🚀</button>
@@ -54,11 +54,21 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // URL parametrlarini o'qish (agar yozilmagan bo'lsa, avtomatik 35 ta yopiq, 10 ta ochiq qiladi)
+        const urlParams = new URLSearchParams(window.location.search);
+        const yopiqSon = parseInt(urlParams.get('yopiq')) || 35;
+        const ochiqSon = parseInt(urlParams.get('ochiq')) || 10;
+        const jamiSon = yopiqSon + ochiqSon;
+
+        // Bo'lim sarlavhalarini to'g'rilash
+        document.getElementById('closed-section').innerHTML = `<b>I qism. Yopiq testlar (1-${yopiqSon})</b>`;
+        document.getElementById('open-section').innerHTML = `<b>II qism. Ochiq testlar (${yopiqSon + 1}-${jamiSon})</b>`;
+
         const closedContainer = document.getElementById('closed-questions');
         const openContainer = document.getElementById('open-questions');
 
-        // 1-35 Yopiq testlar (Knopka ko'rinishida)
-        for (let i = 1; i <= 35; i++) {
+        // Yopiq testlar (Knopka ko'rinishida)
+        for (let i = 1; i <= yopiqSon; i++) {
             closedContainer.innerHTML += `
                 <div class="question-box">
                     <label><b>${i}-savol:</b></label>
@@ -79,8 +89,8 @@
             `;
         }
 
-        // 36-45 Ochiq testlar
-        for (let i = 36; i <= 45; i++) {
+        // Ochiq testlar
+        for (let i = yopiqSon + 1; i <= jamiSon; i++) {
             openContainer.innerHTML += `
                 <div class="question-box">
                     <label><b>${i}-savol (ochiq):</b></label>
