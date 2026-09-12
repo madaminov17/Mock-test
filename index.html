@@ -98,9 +98,15 @@
                 }
             }
 
-            // Telegram botga yuborish
-            tg.sendData(JSON.stringify(answers));
-            tg.close();
+            // Ma'lumotni Telegram botga yuborish
+            if (window.Telegram && window.Telegram.WebApp && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                tg.sendData(JSON.stringify(answers));
+                tg.close();
+            } else {
+                // Agar oddiy brauzerda ochilgan bo'lsa xabar berish uchun
+                alert("Iltimos, testni to'g'ridan-to'g'ri Telegram bot ichidan ochib topshiring!");
+                console.log("Yuborilayotgan obyekt:", answers);
+            }
         }
 
         renderQuestions();
