@@ -3,111 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Matematika - Milliy Sertifikat</title>
+    <title>Matematika Test | Mini App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; padding: 15px; margin: 0; }
-        .header { text-align: center; margin-bottom: 20px; position: sticky; top: 0; background: #f4f4f9; padding: 10px 0; z-index: 100; border-bottom: 1px solid #ddd; }
-        .timer { font-size: 26px; font-weight: bold; color: #d9534f; }
-        .question-box { background: white; padding: 15px; margin-bottom: 12px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .section-title { margin: 20px 0 10px 0; color: #222; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .options-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-        .options-group input[type="radio"] { display: none; }
-        .options-group label { display: block; text-align: center; padding: 12px 0; border: 2px solid #e0e0e0; border-radius: 8px; font-weight: bold; font-size: 16px; color: #333; background-color: #fafafa; cursor: pointer; transition: all 0.2s ease; user-select: none; }
-        .options-group input[type="radio"]:checked + label { background-color: #0088cc; color: white; border-color: #0088cc; box-shadow: 0 3px 8px rgba(0, 136, 204, 0.3); transform: scale(1.02); }
-        .open-input { width: 100%; padding: 12px; margin-top: 8px; border: 2px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: border-color 0.2s; }
-        .open-input:focus { border-color: #0088cc; }
-        .submit-btn { width: 100%; padding: 16px; background-color: #28a745; color: white; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; margin: 20px 0 30px 0; font-weight: bold; }
-    </style>
 </head>
-<body>
-    <div class="header">
-        <div class="timer" id="time">02:00:00</div>
-    </div>
-    
-    <form id="testForm">
-        <!-- Shaxsiy ma'lumotlar -->
-        <div class="section-title"><b>Shaxsiy ma'lumotlar</b></div>
-        <div class="question-box">
-            <input type="text" class="open-input" name="first_name" placeholder="Ismingiz" required style="margin-bottom: 10px;">
-            <input type="text" class="open-input" name="last_name" placeholder="Familiyangiz" required>
+<body class="bg-gray-50 min-h-screen p-4 sm:p-6">
+
+    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <!-- Yuqori qism (Ism va Taymer) -->
+        <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
+            <div>
+                <h1 id="studentName" class="text-xl font-bold text-gray-800">O'quvchi</h1>
+                <p class="text-xs text-gray-400">Milliy Sertifikat Testi</p>
+            </div>
+            <div id="timer" class="bg-indigo-50 text-indigo-600 font-bold px-4 py-2 rounded-xl text-sm">
+                ⏳ 120:00
+            </div>
         </div>
 
-        <div id="closed-section" class="section-title"><b>I qism. Yopiq testlar</b></div>
-        <div id="closed-questions"></div>
+        <!-- Savollar maydoni -->
+        <div id="questionsContainer" class="space-y-6 mb-8">
+            <!-- Savollar shu yerga avtomatik chiqadi -->
+        </div>
 
-        <div id="open-section" class="section-title"><b>II qism. Ochiq testlar</b></div>
-        <div id="open-questions"></div>
-
-        <button type="button" class="submit-btn" onclick="submitTest()">Javoblarni yuborish 🚀</button>
-    </form>
+        <!-- Yuborish tugmasi -->
+        <button onclick="submitTest()" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-emerald-700 transition shadow-md">
+            Testni Yakunlash va Topshirish 🚀
+        </button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
 
+        // URL parametridan yopiq, ochiq soni va ism-familiyani olish
         const urlParams = new URLSearchParams(window.location.search);
-        const yopiqSon = parseInt(urlParams.get('yopiq')) || 35;
-        const ochiqSon = parseInt(urlParams.get('ochiq')) || 10;
-        const jamiSon = yopiqSon + ochiqSon;
+        const closedCount = parseInt(urlParams.get('yopiq')) || 35;
+        const openCount = parseInt(urlParams.get('ochiq')) || 10;
+        const firstName = urlParams.get('first_name') || "Noma'lum";
+        const lastName = urlParams.get('last_name') || "";
 
-        document.getElementById('closed-section').innerHTML = `<b>I qism. Yopiq testlar (1-${yopiqSon})</b>`;
-        document.getElementById('open-section').innerHTML = `<b>II qism. Ochiq testlar (${yopiqSon + 1}-${jamiSon})</b>`;
+        document.getElementById('studentName').textContent = `${firstName} ${lastName}`;
 
-        const closedContainer = document.getElementById('closed-questions');
-        const openContainer = document.getElementById('open-questions');
+        // Savollarni ekranga chiqarish
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            container.innerHTML = '';
+            const total = closedCount + openCount;
 
-        for (let i = 1; i <= yopiqSon; i++) {
-            closedContainer.innerHTML += `
-                <div class="question-box">
-                    <label><b>${i}-savol:</b></label>
-                    <div class="options-group">
-                        <input type="radio" id="q${i}_a" name="q${i}" value="A">
-                        <label for="q${i}_a">A</label>
-                        <input type="radio" id="q${i}_b" name="q${i}" value="B">
-                        <label for="q${i}_b">B</label>
-                        <input type="radio" id="q${i}_c" name="q${i}" value="C">
-                        <label for="q${i}_c">C</label>
-                        <input type="radio" id="q${i}_d" name="q${i}" value="D">
-                        <label for="q${i}_d">D</label>
-                    </div>
-                </div>
-            `;
-        }
+            for (let i = 1; i <= total; i++) {
+                let isClosed = i <= closedCount;
+                let html = '';
 
-        for (let i = yopiqSon + 1; i <= jamiSon; i++) {
-            openContainer.innerHTML += `
-                <div class="question-box">
-                    <label><b>${i}-savol (ochiq):</b></label>
-                    <input type="text" class="open-input" name="q${i}" placeholder="Javobni kiriting" autocomplete="off">
-                </div>
-            `;
-        }
-
-        let timeInSeconds = 7200; 
-        let timerElement = document.getElementById('time');
-        let timer = setInterval(function() {
-            timeInSeconds--;
-            let h = Math.floor(timeInSeconds / 3600);
-            let m = Math.floor((timeInSeconds % 3600) / 60);
-            let s = timeInSeconds % 60;
-            timerElement.textContent = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-            if (timeInSeconds <= 0) { clearInterval(timer); submitTest(); }
-        }, 1000);
-
-        function submitTest() {
-            let form = document.getElementById('testForm');
-            // Ism va familiya kiritilganligini tekshirish
-            if(!form.first_name.value || !form.last_name.value) {
-                tg.showAlert("Iltimos, ism va familiyangizni kiriting!");
-                return;
+                if (isClosed) {
+                    html = `
+                        <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                            <span class="block font-bold text-gray-700 mb-2">${i}-savol (Yopiq)</span>
+                            <div class="flex gap-4">
+                                ${['A', 'B', 'C', 'D'].map(opt => `
+                                    <label class="flex items-center gap-2 cursor-pointer font-medium text-gray-600">
+                                        <input type="radio" name="q${i}" value="${opt}" class="w-4 h-4 text-indigo-600"> ${opt}
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html = `
+                        <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                            <span class="block font-bold text-emerald-700 mb-2">${i}-savol (Ochiq)</span>
+                            <input type="text" id="q${i}" placeholder="Javobni kiriting..." class="w-full sm:w-1/2 border border-gray-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        </div>
+                    `;
+                }
+                container.innerHTML += html;
             }
-            let formData = new FormData(form);
-            let answers = {};
-            formData.forEach((value, key) => { answers[key] = value.trim().toUpperCase(); });
+        }
+
+        // Testni yuborish
+        function submitTest() {
+            if (!confirm("Testni yakunlashni xohlaysizmi?")) return;
+
+            let answers = {
+                first_name: firstName,
+                last_name: lastName
+            };
+
+            const total = closedCount + openCount;
+            for (let i = 1; i <= total; i++) {
+                let isClosed = i <= closedCount;
+                if (isClosed) {
+                    const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                    answers[`q${i}`] = selected ? selected.value : "";
+                } else {
+                    const val = document.getElementById(`q${i}`).value.trim();
+                    answers[`q${i}`] = val;
+                }
+            }
+
+            // Telegram botga ma'lumotni qaytarish
             tg.sendData(JSON.stringify(answers));
             tg.close();
         }
+
+        // Taymer (120 daqiqa)
+        let timeLeft = 120 * 60;
+        setInterval(() => {
+            if (timeLeft <= 0) {
+                submitTest();
+                return;
+            }
+            timeLeft--;
+            let mins = Math.floor(timeLeft / 60);
+            let secs = timeLeft % 60;
+            document.getElementById('timer').textContent = `⏳ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }, 1000);
+
+        renderQuestions();
     </script>
 </body>
 </html>
