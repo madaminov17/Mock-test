@@ -7,28 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 sm:p-6">
+<body class="bg-gray-100 py-6 px-4">
 
-    <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <!-- Yuqori qism (Ism va Taymer) -->
-        <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-6">
-            <div>
-                <h1 id="studentName" class="text-xl font-bold text-gray-800">O'quvchi</h1>
-                <p class="text-xs text-gray-400">Milliy Sertifikat Testi</p>
-            </div>
-            <div id="timer" class="bg-indigo-50 text-indigo-600 font-bold px-4 py-2 rounded-xl text-sm">
-                ⏳ 120:00
-            </div>
+    <div class="max-w-xl mx-auto bg-white rounded-2xl shadow-md p-6">
+        <!-- O'quvchi ismi -->
+        <div class="border-b pb-4 mb-6 text-center">
+            <h1 id="studentName" class="text-2xl font-bold text-indigo-900">O'quvchi</h1>
+            <p class="text-sm text-gray-500 mt-1">Matematika Milliy Sertifikat Testi</p>
         </div>
 
-        <!-- Savollar maydoni -->
-        <div id="questionsContainer" class="space-y-6 mb-8">
-            <!-- Savollar shu yerga avtomatik chiqadi -->
+        <!-- Savollar ro'yxati -->
+        <div id="questionsContainer" class="space-y-4 mb-6">
+            <!-- JavaScript orqali savollar shu yerga chiqadi -->
         </div>
 
         <!-- Yuborish tugmasi -->
-        <button onclick="submitTest()" class="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-emerald-700 transition shadow-md">
-            Testni Yakunlash va Topshirish 🚀
+        <button onclick="submitTest()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold text-lg hover:bg-indigo-700 transition shadow">
+            Natijani Topshirish 🚀
         </button>
     </div>
 
@@ -36,7 +31,7 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // URL parametridan yopiq, ochiq soni va ism-familiyani olish
+        // URL parametrlarini olish
         const urlParams = new URLSearchParams(window.location.search);
         const closedCount = parseInt(urlParams.get('yopiq')) || 35;
         const openCount = parseInt(urlParams.get('ochiq')) || 10;
@@ -45,7 +40,7 @@
 
         document.getElementById('studentName').textContent = `${firstName} ${lastName}`;
 
-        // Savollarni ekranga chiqarish
+        // Savollarni chiroyli va tartibli chiqarish
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             container.innerHTML = '';
@@ -56,23 +51,25 @@
                 let html = '';
 
                 if (isClosed) {
+                    // Yopiq savollar (A, B, C, D)
                     html = `
-                        <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                             <span class="block font-bold text-gray-700 mb-2">${i}-savol (Yopiq)</span>
-                            <div class="flex gap-4">
+                            <div class="grid grid-cols-4 gap-2">
                                 ${['A', 'B', 'C', 'D'].map(opt => `
-                                    <label class="flex items-center gap-2 cursor-pointer font-medium text-gray-600">
-                                        <input type="radio" name="q${i}" value="${opt}" class="w-4 h-4 text-indigo-600"> ${opt}
+                                    <label class="flex items-center justify-center py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-indigo-50 font-semibold text-gray-700">
+                                        <input type="radio" name="q${i}" value="${opt}" class="mr-1.5 accent-indigo-600"> ${opt}
                                     </label>
                                 `).join('')}
                             </div>
                         </div>
                     `;
                 } else {
+                    // Ochiq savollar (Raqam yoki matn yozish)
                     html = `
-                        <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50">
-                            <span class="block font-bold text-emerald-700 mb-2">${i}-savol (Ochiq)</span>
-                            <input type="text" id="q${i}" placeholder="Javobni kiriting..." class="w-full sm:w-1/2 border border-gray-200 p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <span class="block font-bold text-indigo-700 mb-2">${i}-savol (Ochiq)</span>
+                            <input type="text" id="q${i}" placeholder="Javobni kiriting..." class="w-full border border-gray-300 bg-white p-3 rounded-lg focus:outline-none focus:border-indigo-600 font-medium">
                         </div>
                     `;
                 }
@@ -82,7 +79,7 @@
 
         // Testni yuborish
         function submitTest() {
-            if (!confirm("Testni yakunlashni xohlaysizmi?")) return;
+            if (!confirm("Test javoblarini topshirishni tasdiqlaysizmi?")) return;
 
             let answers = {
                 first_name: firstName,
@@ -101,23 +98,10 @@
                 }
             }
 
-            // Telegram botga ma'lumotni qaytarish
+            // Telegram botga yuborish
             tg.sendData(JSON.stringify(answers));
             tg.close();
         }
-
-        // Taymer (120 daqiqa)
-        let timeLeft = 120 * 60;
-        setInterval(() => {
-            if (timeLeft <= 0) {
-                submitTest();
-                return;
-            }
-            timeLeft--;
-            let mins = Math.floor(timeLeft / 60);
-            let secs = timeLeft % 60;
-            document.getElementById('timer').textContent = `⏳ ${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }, 1000);
 
         renderQuestions();
     </script>
