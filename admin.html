@@ -7,107 +7,122 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 flex flex-col md:flex-row min-h-screen">
 
-    <!-- Yuqori panel -->
-    <header class="bg-indigo-900 text-white p-4 sm:p-5 flex justify-between items-center sticky top-0 z-40 shadow-md">
-        <h2 class="text-lg sm:text-xl font-bold tracking-wide">📊 LMS Admin Panel</h2>
-        <div class="flex gap-2">
-            <button onclick="loadData()" class="bg-indigo-700 hover:bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl font-medium transition text-sm">🔄 Yangilash</button>
-            <button onclick="openModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 sm:px-4 py-2 rounded-xl font-bold transition text-sm">➕ Yangi test</button>
-        </div>
+    <!-- Mobil uchun yuqori panel -->
+    <header class="bg-indigo-900 text-white p-4 flex justify-between items-center md:hidden sticky top-0 z-50">
+        <h2 class="text-xl font-bold">LMS Admin</h2>
+        <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-indigo-800 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
     </header>
 
-    <main class="max-w-6xl mx-auto w-full p-4 sm:p-6 space-y-8">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-indigo-900 text-white p-6 hidden md:block md:sticky md:top-0 md:h-screen fixed inset-y-0 left-0 z-50 transition-all duration-300">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold tracking-wide">LMS Admin</h2>
+            <button onclick="toggleSidebar()" class="md:hidden text-white">✕</button>
+        </div>
+        <nav class="space-y-2">
+            <button data-view="create" onclick="showView('create')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">📝 Test yaratish</button>
+            <button data-view="students" onclick="showView('students')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">👥 O'quvchilarim</button>
+            <button data-view="results" onclick="showView('results')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">🏆 Natijalar</button>
+        </nav>
+    </aside>
 
-        <!-- FAOL TEST HOLATI -->
-        <div id="activeTestBanner" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center flex-wrap gap-2">
-            <span class="text-gray-500 text-sm">Faol test yuklanmoqda...</span>
+    <!-- Asosiy Oyna -->
+    <main class="flex-1 p-4 sm:p-6 md:p-10 max-w-5xl mx-auto w-full">
+
+        <!-- ============ VIEW 1: TEST YARATISH ============ -->
+        <div id="view-create" class="view-section">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">📝 Test Yaratish</h1>
+
+            <div id="activeTestBanner" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <span class="text-gray-400 text-sm">Faol test yuklanmoqda...</span>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:col-span-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Yopiq savollar soni:</label>
+                        <input type="number" id="closedCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="35">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">Ochiq savollar soni:</label>
+                        <input type="number" id="openCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="10">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="generateKeyInputs()" class="w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-black transition">Kataklarni Hosil Qilish ⚙️</button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">To'g'ri javoblar kataklari:</label>
+                    <div id="keysContainer" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-9 gap-3 max-h-64 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50"></div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">📤 Push xabar qaysi guruh(lar)ga yuborilsin?</label>
+                    <p class="text-xs text-gray-400 mb-2">Hech qaysi guruh belgilanmasa — testni HAMMA o'quvchiga yuboriladi.</p>
+                    <div id="groupCheckboxes" class="flex flex-wrap gap-2 p-2 border border-gray-100 rounded-xl bg-gray-50 min-h-[52px]"></div>
+                </div>
+
+                <button onclick="createTest()" class="w-full bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition shadow-sm">Testni Yaratish va Push Yuborish 🚀</button>
+            </div>
         </div>
 
-        <!-- 1. GURUHLAR VA O'QUVCHILAR -->
-        <section class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 class="text-lg font-bold mb-4 text-gray-700">👥 Guruhlar va O'quvchilar</h2>
+        <!-- ============ VIEW 2: O'QUVCHILARIM ============ -->
+        <div id="view-students" class="view-section hidden">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">👥 O'quvchilarim</h1>
 
-            <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                <input type="text" id="groupName" placeholder="Guruh nomi (masalan: Nukus Fiz-Mat 10-sinf)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1">
-                <button onclick="createGroup()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">Guruh qo'shish ➕</button>
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
+                <h2 class="text-sm font-bold mb-3 text-gray-700">Yangi guruh qo'shish</h2>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="text" id="groupName" placeholder="Guruh nomi (masalan: Nukus Fiz-Mat 10-sinf)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1">
+                    <button onclick="createGroup()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">Guruh qo'shish ➕</button>
+                </div>
             </div>
-            <div id="groupsList" class="flex flex-wrap gap-2 mb-6"></div>
 
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left border-collapse">
-                    <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
-                        <tr>
-                            <th class="px-4 py-3 font-semibold">Ism Familiya</th>
-                            <th class="px-4 py-3 font-semibold">Telegram ID</th>
-                            <th class="px-4 py-3 font-semibold">Guruh</th>
-                            <th class="px-4 py-3 font-semibold">Holati</th>
-                            <th class="px-4 py-3 font-semibold">Amal</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-gray-600 text-sm" id="studentsTable">
-                        <tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">Yuklanmoqda...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+            <div id="groupsAccordion" class="space-y-4"></div>
+        </div>
 
-        <!-- 2. NATIJALAR JADVALI -->
-        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
-                <h3 class="text-lg font-bold text-gray-700">🏆 O'quvchilar Natijalari</h3>
-                <span id="totalCount" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">Jami: 0 ta</span>
+        <!-- ============ VIEW 3: NATIJALAR ============ -->
+        <div id="view-results" class="view-section hidden">
+            <div id="resultsListWrap">
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">🏆 Natijalar</h1>
+                <p class="text-sm text-gray-400 mb-4">Natijalarini ko'rish uchun testni tanlang</p>
+                <div id="testsList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-left border-collapse">
-                    <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
-                        <tr>
-                            <th class="px-4 sm:px-6 py-4 font-semibold">O'quvchi</th>
-                            <th class="px-4 sm:px-6 py-4 font-semibold">To'g'ri / Jami</th>
-                            <th class="px-4 sm:px-6 py-4 font-semibold">Foiz</th>
-                            <th class="px-4 sm:px-6 py-4 font-semibold">Topshirgan vaqti</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 text-gray-600 text-sm" id="resultsTable">
-                        <tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Yuklanmoqda...</td></tr>
-                    </tbody>
-                </table>
+
+            <div id="resultsDetailWrap" class="hidden">
+                <button onclick="backToTestsList()" class="mb-4 text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1">← Testlar ro'yxatiga qaytish</button>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-5 sm:p-6 border-b border-gray-100">
+                        <h3 id="detailTestTitle" class="text-lg font-bold text-gray-700"></h3>
+                        <span id="detailTestCount" class="text-sm text-gray-400"></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-left border-collapse">
+                            <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
+                                <tr>
+                                    <th class="px-4 sm:px-6 py-4 font-semibold">O'rin</th>
+                                    <th class="px-4 sm:px-6 py-4 font-semibold">O'quvchi</th>
+                                    <th class="px-4 sm:px-6 py-4 font-semibold">To'g'ri / Jami</th>
+                                    <th class="px-4 sm:px-6 py-4 font-semibold">Foiz</th>
+                                    <th class="px-4 sm:px-6 py-4 font-semibold">Topshirgan vaqti</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-gray-600 text-sm" id="detailResultsTable"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
+
     </main>
-
-    <!-- MODAL: YANGI TEST YARATISH -->
-    <div id="testModalOverlay" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-5 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold text-gray-700">📝 Yangi Test Yaratish va Kalitlarni Belgilash</h2>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">✕</button>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full sm:col-span-3">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Yopiq savollar soni:</label>
-                    <input type="number" id="closedCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="35">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1">Ochiq savollar soni:</label>
-                    <input type="number" id="openCount" onchange="generateKeyInputs()" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="10">
-                </div>
-                <div class="flex items-end">
-                    <button onclick="generateKeyInputs()" class="w-full bg-gray-800 text-white p-3 rounded-xl font-bold hover:bg-black transition">Kataklarni Hosil Qilish ⚙️</button>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">To'g'ri javoblar kataklari:</label>
-                <div id="keysContainer" class="grid grid-cols-2 sm:grid-cols-5 md:grid-cols-9 gap-3 max-h-64 overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50"></div>
-            </div>
-
-            <button onclick="createTest()" class="w-full bg-emerald-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition shadow-sm">Testni Saqlash va Faollashtirish 🚀</button>
-        </div>
-    </div>
 
     <script>
         const SUPABASE_URL = "https://morimienswrvhcctnptt.supabase.co";
@@ -115,20 +130,43 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let groupsCache = [];
+        let studentsCache = [];
+        let allResultsCache = [];
+        let allTestsCache = [];
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+
+        // ---------- MENYU ALMASHTIRISH ----------
+        function showView(name) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`view-${name}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.view === name) {
+                    btn.classList.add('bg-indigo-700');
+                } else {
+                    btn.classList.remove('bg-indigo-700');
+                }
+            });
+
+            if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('hidden');
+
+            if (name === 'results') {
+                backToTestsList();
+                loadTestsList();
+            }
+        }
 
         window.onload = function() {
             generateKeyInputs();
-            loadGroups();
-            loadStudents();
-            loadData();
-        }
-
-        // ---------- MODAL ----------
-        function openModal() {
-            document.getElementById('testModalOverlay').classList.remove('hidden');
-        }
-        function closeModal() {
-            document.getElementById('testModalOverlay').classList.add('hidden');
+            loadGroups().then(() => {
+                loadStudents();
+                renderGroupCheckboxes();
+            });
+            loadActiveTestBanner();
+            showView('create');
         }
 
         // ---------- TEST KALITLARI ----------
@@ -142,7 +180,6 @@
             for (let i = 1; i <= total; i++) {
                 let isClosed = i <= closed;
                 let html = '';
-
                 if (isClosed) {
                     html = `
                         <div class="bg-white p-2 rounded-lg border border-gray-200 text-center shadow-xs">
@@ -174,73 +211,137 @@
                 alert("Iltimos, guruh nomini kiriting!");
                 return;
             }
-
             const { error } = await supabaseClient.from('groups').insert({ name: name });
             if (error) {
                 alert("Xatolik: " + error.message);
             } else {
                 document.getElementById('groupName').value = '';
-                loadGroups();
+                await loadGroups();
+                renderGroupCheckboxes();
+                renderGroupsAccordion();
             }
         }
 
         async function loadGroups() {
             const { data, error } = await supabaseClient.from('groups').select('*').order('id', { ascending: true });
-            const listDiv = document.getElementById('groupsList');
             if (error) {
                 console.error("Guruhlarni yuklashda xatolik:", error.message);
                 return;
             }
             groupsCache = data || [];
-
-            listDiv.innerHTML = '';
-            groupsCache.forEach(g => {
-                listDiv.innerHTML += `<span class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-indigo-100">📁 ${g.name}</span>`;
-            });
         }
 
         function groupNameById(id) {
             const g = groupsCache.find(g => g.id === id);
-            return g ? g.name : '—';
+            return g ? g.name : 'Guruhsiz';
         }
 
-        // ---------- O'QUVCHILAR (RO'YXAT + BLOKLASH) ----------
-        async function loadStudents() {
-            const tbody = document.getElementById('studentsTable');
-            const { data, error } = await supabaseClient.from('students').select('*').order('id', { ascending: false });
+        function renderGroupCheckboxes() {
+            const container = document.getElementById('groupCheckboxes');
+            if (groupsCache.length === 0) {
+                container.innerHTML = `<span class="text-gray-400 text-sm">Hozircha guruhlar mavjud emas. Avval "O'quvchilarim" bo'limida guruh qo'shing.</span>`;
+                return;
+            }
+            container.innerHTML = groupsCache.map(g => `
+                <label class="flex items-center gap-2 bg-white border border-gray-200 px-3 py-2 rounded-xl cursor-pointer hover:border-indigo-400 text-sm font-medium text-gray-700">
+                    <input type="checkbox" class="group-target-checkbox accent-indigo-600" value="${g.id}">
+                    📁 ${g.name}
+                </label>
+            `).join('');
+        }
 
+        // ---------- O'QUVCHILAR ----------
+        async function loadStudents() {
+            const { data, error } = await supabaseClient.from('students').select('*').order('id', { ascending: false });
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-rose-500">Xatolik: ${error.message}</td></tr>`;
                 console.error("O'quvchilarni yuklashda xatolik:", error.message);
                 return;
             }
+            studentsCache = data || [];
+            renderGroupsAccordion();
+        }
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-gray-400">O'quvchilar mavjud emas.</td></tr>`;
+        function renderGroupsAccordion() {
+            const wrap = document.getElementById('groupsAccordion');
+            if (groupsCache.length === 0) {
+                wrap.innerHTML = `<div class="text-center text-gray-400 py-6">Hozircha guruhlar mavjud emas.</div>`;
                 return;
             }
 
-            tbody.innerHTML = '';
-            data.forEach(st => {
+            wrap.innerHTML = '';
+            groupsCache.forEach(g => {
+                const groupStudents = studentsCache.filter(s => s.group_id === g.id);
+                const accId = `group-body-${g.id}`;
+                wrap.innerHTML += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <button onclick="toggleAccordion('${accId}')" class="w-full flex justify-between items-center p-4 sm:p-5 text-left">
+                            <span class="font-bold text-gray-700">📁 ${g.name}</span>
+                            <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">${groupStudents.length} ta o'quvchi</span>
+                        </button>
+                        <div id="${accId}" class="hidden border-t border-gray-100 overflow-x-auto">
+                            ${renderStudentsTable(groupStudents)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            const unassigned = studentsCache.filter(s => !groupsCache.find(g => g.id === s.group_id));
+            if (unassigned.length > 0) {
+                wrap.innerHTML += `
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <button onclick="toggleAccordion('group-body-none')" class="w-full flex justify-between items-center p-4 sm:p-5 text-left">
+                            <span class="font-bold text-gray-700">❓ Guruhsiz</span>
+                            <span class="text-xs bg-gray-100 text-gray-500 px-3 py-1 rounded-full font-medium">${unassigned.length} ta o'quvchi</span>
+                        </button>
+                        <div id="group-body-none" class="hidden border-t border-gray-100 overflow-x-auto">
+                            ${renderStudentsTable(unassigned)}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderStudentsTable(students) {
+            if (students.length === 0) {
+                return `<div class="p-5 text-center text-gray-400 text-sm">Bu guruhda o'quvchi yo'q.</div>`;
+            }
+            const rows = students.map(st => {
                 const blocked = !!st.is_blocked;
-                tbody.innerHTML += `
+                return `
                     <tr class="hover:bg-gray-50/50 transition">
-                        <td class="px-4 py-3 font-medium text-gray-800">${st.first_name || ''} ${st.last_name || ''}</td>
-                        <td class="px-4 py-3 text-gray-500">${st.telegram_id}</td>
-                        <td class="px-4 py-3 text-gray-500">${groupNameById(st.group_id)}</td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 sm:px-5 py-3 font-medium text-gray-800">${st.first_name || ''} ${st.last_name || ''}</td>
+                        <td class="px-4 sm:px-5 py-3 text-gray-500">${st.telegram_id}</td>
+                        <td class="px-4 sm:px-5 py-3">
                             <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${blocked ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">
                                 ${blocked ? '🔒 Bloklangan' : '✅ Faol'}
                             </span>
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 sm:px-5 py-3">
                             <button onclick="toggleBlock(${st.id}, ${blocked})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${blocked ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-rose-600 hover:bg-rose-700 text-white'}">
                                 ${blocked ? 'Blokdan chiqarish' : 'Bloklash'}
                             </button>
                         </td>
                     </tr>
                 `;
-            });
+            }).join('');
+
+            return `
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="px-4 sm:px-5 py-3 font-semibold">Ism Familiya</th>
+                            <th class="px-4 sm:px-5 py-3 font-semibold">Telegram ID</th>
+                            <th class="px-4 sm:px-5 py-3 font-semibold">Holati</th>
+                            <th class="px-4 sm:px-5 py-3 font-semibold">Amal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-600 text-sm">${rows}</tbody>
+                </table>
+            `;
+        }
+
+        function toggleAccordion(id) {
+            document.getElementById(id).classList.toggle('hidden');
         }
 
         async function toggleBlock(studentId, currentlyBlocked) {
@@ -252,16 +353,21 @@
             if (error) {
                 alert("Xatolik: " + error.message);
             } else {
-                loadStudents();
+                await loadStudents();
             }
         }
 
-        // ---------- TEST YARATISH ----------
+        // ---------- TEST YARATISH + PUSH TARGETLASH ----------
         async function createTest() {
             const title = document.getElementById('testTitle').value.trim();
             const closed_count = parseInt(document.getElementById('closedCount').value);
             const open_count = parseInt(document.getElementById('openCount').value);
             const total = closed_count + open_count;
+
+            if (!title) {
+                alert("Iltimos, test nomini kiriting!");
+                return;
+            }
 
             let keys = [];
             for (let i = 1; i <= total; i++) {
@@ -273,32 +379,42 @@
                 keys.push(val);
             }
 
-            if (!title) {
-                alert("Iltimos, test nomini kiriting!");
-                return;
-            }
+            const selectedGroupIds = Array.from(document.querySelectorAll('.group-target-checkbox:checked')).map(cb => parseInt(cb.value));
 
             await supabaseClient.from('tests').update({ is_active: false }).eq('is_active', true);
 
-            const { error } = await supabaseClient.from('tests').insert({
+            const { data: insertedTest, error } = await supabaseClient.from('tests').insert({
                 title: title,
                 closed_count: closed_count,
                 open_count: open_count,
                 keys: keys,
-                is_active: true
-            });
+                is_active: true,
+                notified: false
+            }).select().single();
 
             if (error) {
                 alert("Saqlashda xatolik: " + error.message);
-            } else {
-                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi!");
-                document.getElementById('testTitle').value = '';
-                closeModal();
-                loadData();
+                return;
             }
+
+            if (selectedGroupIds.length > 0) {
+                const rows = selectedGroupIds.map(gid => ({ test_id: insertedTest.id, group_id: gid }));
+                const { error: tgError } = await supabaseClient.from('test_groups').insert(rows);
+                if (tgError) {
+                    alert("Test yaratildi, lekin guruhlarni bog'lashda xatolik: " + tgError.message);
+                }
+            }
+
+            const targetText = selectedGroupIds.length > 0
+                ? `${selectedGroupIds.length} ta tanlangan guruhga`
+                : "HAMMA o'quvchiga";
+            alert(`✅ Test yaratildi va faollashtirildi! Bir necha soniyadan so'ng bot ${targetText} push xabar yuboradi.`);
+
+            document.getElementById('testTitle').value = '';
+            document.querySelectorAll('.group-target-checkbox').forEach(cb => cb.checked = false);
+            loadActiveTestBanner();
         }
 
-        // ---------- FAOL TEST BANNERI ----------
         async function loadActiveTestBanner() {
             const banner = document.getElementById('activeTestBanner');
             const { data, error } = await supabaseClient.from('tests').select('*').eq('is_active', true).order('id', { ascending: false }).limit(1);
@@ -310,64 +426,104 @@
 
             const t = data[0];
             banner.innerHTML = `
-                <div>
-                    <span class="text-xs text-gray-400 block">Faol test</span>
-                    <span class="font-bold text-gray-800">${t.title}</span>
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <div>
+                        <span class="text-xs text-gray-400 block">Hozirgi faol test</span>
+                        <span class="font-bold text-gray-800">${t.title}</span>
+                    </div>
+                    <span class="text-sm bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-medium">${t.closed_count + t.open_count} savol</span>
                 </div>
-                <span class="text-sm bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-medium">${t.closed_count + t.open_count} savol</span>
             `;
         }
 
-        // ---------- NATIJALAR ----------
-        async function loadData() {
-            loadActiveTestBanner();
+        // ---------- NATIJALAR: TESTLAR RO'YXATI ----------
+        async function loadTestsList() {
+            const listDiv = document.getElementById('testsList');
+            listDiv.innerHTML = `<div class="col-span-full text-center text-gray-400 py-6">Yuklanmoqda...</div>`;
 
-            const tbody = document.getElementById('resultsTable');
-            const totalCountSpan = document.getElementById('totalCount');
-            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Yuklanmoqda...</td></tr>`;
-
-            // Natijalar va o'quvchilarni parallel yuklaymiz, keyin ID orqali bog'laymiz
-            const [resultsRes, studentsRes] = await Promise.all([
-                supabaseClient.from('test_results').select('*').order('id', { ascending: false }),
-                supabaseClient.from('students').select('*')
+            const [testsRes, resultsRes] = await Promise.all([
+                supabaseClient.from('tests').select('*').order('id', { ascending: false }),
+                supabaseClient.from('test_results').select('*')
             ]);
 
-            if (resultsRes.error) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-rose-500">Xatolik: ${resultsRes.error.message}</td></tr>`;
-                console.error("Natijalarni yuklashda xatolik:", resultsRes.error.message);
+            if (testsRes.error) {
+                listDiv.innerHTML = `<div class="col-span-full text-center text-rose-500 py-6">Xatolik: ${testsRes.error.message}</div>`;
                 return;
             }
 
-            const data = resultsRes.data;
+            allTestsCache = testsRes.data || [];
+            allResultsCache = resultsRes.data || [];
+
+            if (allTestsCache.length === 0) {
+                listDiv.innerHTML = `<div class="col-span-full text-center text-gray-400 py-6">Hozircha testlar mavjud emas.</div>`;
+                return;
+            }
+
+            listDiv.innerHTML = allTestsCache.map(t => {
+                const count = allResultsCache.filter(r => r.test_id === t.id).length;
+                return `
+                    <button onclick="openTestResults(${t.id})" class="text-left bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:border-indigo-400 transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-gray-800">${t.title}</h3>
+                            ${t.is_active ? '<span class="text-xs bg-emerald-50 text-emerald-600 px-2 py-1 rounded-full font-bold">Faol</span>' : '<span class="text-xs bg-gray-100 text-gray-400 px-2 py-1 rounded-full font-bold">Yopiq</span>'}
+                        </div>
+                        <p class="text-xs text-gray-400">${(t.closed_count || 0) + (t.open_count || 0)} savol · ${count} ta topshirilgan</p>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function backToTestsList() {
+            document.getElementById('resultsListWrap').classList.remove('hidden');
+            document.getElementById('resultsDetailWrap').classList.add('hidden');
+        }
+
+        async function openTestResults(testId) {
+            const test = allTestsCache.find(t => t.id === testId);
+            if (!test) return;
+
+            document.getElementById('resultsListWrap').classList.add('hidden');
+            document.getElementById('resultsDetailWrap').classList.remove('hidden');
+            document.getElementById('detailTestTitle').textContent = test.title;
+
+            let results = allResultsCache.filter(r => r.test_id === testId);
+            results.sort((a, b) => {
+                const pa = a.total ? a.correct_count / a.total : 0;
+                const pb = b.total ? b.correct_count / b.total : 0;
+                return pb - pa;
+            });
+
+            document.getElementById('detailTestCount').textContent = `${results.length} ta o'quvchi topshirgan`;
+
+            const tbody = document.getElementById('detailResultsTable');
+            if (results.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-gray-400">Bu testni hali hech kim topshirmagan.</td></tr>`;
+                return;
+            }
+
+            if (studentsCache.length === 0) {
+                await loadStudents();
+            }
             const studentsMap = {};
-            (studentsRes.data || []).forEach(s => { studentsMap[s.telegram_id] = s; });
+            studentsCache.forEach(s => { studentsMap[s.telegram_id] = s; });
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Hozircha natijalar mavjud emas.</td></tr>`;
-                totalCountSpan.textContent = `Jami: 0 ta`;
-                return;
-            }
-
-            totalCountSpan.textContent = `Jami: ${data.length} ta`;
-            tbody.innerHTML = '';
-
-            data.forEach(res => {
-                let percent = res.total ? Math.round((res.correct_count / res.total) * 100) : 0;
-                let badgeColor = percent >= 70 ? 'bg-emerald-50 text-emerald-600' : percent >= 40 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600';
+            tbody.innerHTML = results.map((res, idx) => {
+                const percent = res.total ? Math.round((res.correct_count / res.total) * 100) : 0;
+                const badgeColor = percent >= 70 ? 'bg-emerald-50 text-emerald-600' : percent >= 40 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600';
                 const st = studentsMap[res.telegram_id];
                 const displayName = st ? `${st.first_name || ''} ${st.last_name || ''}`.trim() : `ID: ${res.telegram_id}`;
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1);
 
-                tbody.innerHTML += `
+                return `
                     <tr class="hover:bg-gray-50/50 transition">
+                        <td class="px-4 sm:px-6 py-4 font-bold text-gray-700">${medal}</td>
                         <td class="px-4 sm:px-6 py-4 font-medium text-gray-800">${displayName}</td>
                         <td class="px-4 sm:px-6 py-4 font-bold text-gray-900">${res.correct_count} / ${res.total}</td>
-                        <td class="px-4 sm:px-6 py-4">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${badgeColor}">${percent}%</span>
-                        </td>
+                        <td class="px-4 sm:px-6 py-4"><span class="px-2.5 py-1 rounded-lg text-xs font-bold ${badgeColor}">${percent}%</span></td>
                         <td class="px-4 sm:px-6 py-4 text-gray-400 text-xs sm:text-sm">${new Date(res.submitted_at).toLocaleString()}</td>
                     </tr>
                 `;
-            });
+            }).join('');
         }
     </script>
 </body>
