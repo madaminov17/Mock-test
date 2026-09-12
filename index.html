@@ -11,27 +11,12 @@
         .timer { font-size: 26px; font-weight: bold; color: #d9534f; }
         .question-box { background: white; padding: 15px; margin-bottom: 12px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .section-title { margin: 20px 0 10px 0; color: #222; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* Radio tugmalarni knopka ko'rinishiga keltirish */
         .options-group { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
         .options-group input[type="radio"] { display: none; }
-        .options-group label {
-            display: block; text-align: center; padding: 12px 0;
-            border: 2px solid #e0e0e0; border-radius: 8px;
-            font-weight: bold; font-size: 16px; color: #333;
-            background-color: #fafafa; cursor: pointer; transition: all 0.2s ease;
-            user-select: none;
-        }
-        /* Tanlangan tugma uslubi */
-        .options-group input[type="radio"]:checked + label {
-            background-color: #0088cc; color: white; border-color: #0088cc;
-            box-shadow: 0 3px 8px rgba(0, 136, 204, 0.3); transform: scale(1.02);
-        }
-
-        /* Ochiq savollar uchun input */
+        .options-group label { display: block; text-align: center; padding: 12px 0; border: 2px solid #e0e0e0; border-radius: 8px; font-weight: bold; font-size: 16px; color: #333; background-color: #fafafa; cursor: pointer; transition: all 0.2s ease; user-select: none; }
+        .options-group input[type="radio"]:checked + label { background-color: #0088cc; color: white; border-color: #0088cc; box-shadow: 0 3px 8px rgba(0, 136, 204, 0.3); transform: scale(1.02); }
         .open-input { width: 100%; padding: 12px; margin-top: 8px; border: 2px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: border-color 0.2s; }
         .open-input:focus { border-color: #0088cc; }
-
         .submit-btn { width: 100%; padding: 16px; background-color: #28a745; color: white; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; margin: 20px 0 30px 0; font-weight: bold; }
     </style>
 </head>
@@ -41,6 +26,13 @@
     </div>
     
     <form id="testForm">
+        <!-- Shaxsiy ma'lumotlar -->
+        <div class="section-title"><b>Shaxsiy ma'lumotlar</b></div>
+        <div class="question-box">
+            <input type="text" class="open-input" name="first_name" placeholder="Ismingiz" required style="margin-bottom: 10px;">
+            <input type="text" class="open-input" name="last_name" placeholder="Familiyangiz" required>
+        </div>
+
         <div id="closed-section" class="section-title"><b>I qism. Yopiq testlar</b></div>
         <div id="closed-questions"></div>
 
@@ -54,20 +46,17 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
 
-        // URL parametrlarini o'qish (agar yozilmagan bo'lsa, avtomatik 35 ta yopiq, 10 ta ochiq qiladi)
         const urlParams = new URLSearchParams(window.location.search);
         const yopiqSon = parseInt(urlParams.get('yopiq')) || 35;
         const ochiqSon = parseInt(urlParams.get('ochiq')) || 10;
         const jamiSon = yopiqSon + ochiqSon;
 
-        // Bo'lim sarlavhalarini to'g'rilash
         document.getElementById('closed-section').innerHTML = `<b>I qism. Yopiq testlar (1-${yopiqSon})</b>`;
         document.getElementById('open-section').innerHTML = `<b>II qism. Ochiq testlar (${yopiqSon + 1}-${jamiSon})</b>`;
 
         const closedContainer = document.getElementById('closed-questions');
         const openContainer = document.getElementById('open-questions');
 
-        // Yopiq testlar (Knopka ko'rinishida)
         for (let i = 1; i <= yopiqSon; i++) {
             closedContainer.innerHTML += `
                 <div class="question-box">
@@ -75,13 +64,10 @@
                     <div class="options-group">
                         <input type="radio" id="q${i}_a" name="q${i}" value="A">
                         <label for="q${i}_a">A</label>
-
                         <input type="radio" id="q${i}_b" name="q${i}" value="B">
                         <label for="q${i}_b">B</label>
-
                         <input type="radio" id="q${i}_c" name="q${i}" value="C">
                         <label for="q${i}_c">C</label>
-
                         <input type="radio" id="q${i}_d" name="q${i}" value="D">
                         <label for="q${i}_d">D</label>
                     </div>
@@ -89,46 +75,36 @@
             `;
         }
 
-        // Ochiq testlar
         for (let i = yopiqSon + 1; i <= jamiSon; i++) {
             openContainer.innerHTML += `
                 <div class="question-box">
                     <label><b>${i}-savol (ochiq):</b></label>
-                    <input type="text" class="open-input" name="q${i}" placeholder="Javobni kiriting (masalan: 12)" autocomplete="off">
+                    <input type="text" class="open-input" name="q${i}" placeholder="Javobni kiriting" autocomplete="off">
                 </div>
             `;
         }
 
-        // Taymer mantiqi
         let timeInSeconds = 7200; 
         let timerElement = document.getElementById('time');
-
         let timer = setInterval(function() {
             timeInSeconds--;
             let h = Math.floor(timeInSeconds / 3600);
             let m = Math.floor((timeInSeconds % 3600) / 60);
             let s = timeInSeconds % 60;
-            
-            timerElement.textContent = 
-                (h < 10 ? "0" + h : h) + ":" + 
-                (m < 10 ? "0" + m : m) + ":" + 
-                (s < 10 ? "0" + s : s);
-
-            if (timeInSeconds <= 0) {
-                clearInterval(timer);
-                submitTest();
-            }
+            timerElement.textContent = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+            if (timeInSeconds <= 0) { clearInterval(timer); submitTest(); }
         }, 1000);
 
         function submitTest() {
             let form = document.getElementById('testForm');
+            // Ism va familiya kiritilganligini tekshirish
+            if(!form.first_name.value || !form.last_name.value) {
+                tg.showAlert("Iltimos, ism va familiyangizni kiriting!");
+                return;
+            }
             let formData = new FormData(form);
             let answers = {};
-            
-            formData.forEach((value, key) => { 
-                answers[key] = value.trim().toUpperCase(); 
-            });
-            
+            formData.forEach((value, key) => { answers[key] = value.trim().toUpperCase(); });
             tg.sendData(JSON.stringify(answers));
             tg.close();
         }
