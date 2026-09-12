@@ -3,109 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Matematika Test</title>
+    <title>Admin Dashboard | Matematika Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 flex">
+<body class="bg-gray-50 flex flex-col md:flex-row min-h-screen">
     
-    <!-- Sidebar -->
-    <aside class="w-64 bg-indigo-900 text-white min-h-screen p-5">
-        <h2 class="text-2xl font-bold mb-8">Admin Panel</h2>
-        <nav>
-            <a href="#" class="block py-2.5 px-4 rounded bg-indigo-700 font-semibold mb-2">📊 Boshqaruv va Natijalar</a>
+    <!-- Mobil uchun yuqori panel va Burger menyu -->
+    <header class="bg-indigo-900 text-white p-4 flex justify-between items-center md:hidden">
+        <h2 class="text-xl font-bold">LMS Admin</h2>
+        <button onclick="toggleSidebar()" class="p-2 rounded-lg bg-indigo-800 focus:outline-none">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </header>
+
+    <!-- Sidebar (Yon panel - telefonlarda yashirin bo'ladi, tugma bosganda chiqadi) -->
+    <aside id="sidebar" class="w-64 bg-indigo-900 text-white p-6 hidden md:block fixed md:static inset-y-0 left-0 z-50 transition-all duration-300">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-2xl font-bold tracking-wide">LMS Admin</h2>
+            <button onclick="toggleSidebar()" class="md:hidden text-white">✕</button>
+        </div>
+        <nav class="space-y-3">
+            <a href="#" class="block py-2.5 px-4 rounded-lg bg-indigo-700 font-medium">📊 Natijalar va Tahlil</a>
         </nav>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-semibold text-gray-800">Testlarni Boshqarish</h1>
-            <button onclick="loadResults()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700">Natijalarni Yangilash 🔄</button>
+    <!-- Asosiy Oyna -->
+    <main class="flex-1 p-4 sm:p-6 md:p-10 max-w-7xl mx-auto w-full">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Boshqaruv Paneli</h1>
+            <button onclick="loadData()" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2.5 rounded-xl font-medium hover:bg-indigo-700 transition shadow-sm text-center">Ma'lumotlarni Yangilash 🔄</button>
         </div>
 
-        <!-- Yangi test yaratish qismi -->
-        <div class="bg-white p-6 rounded-lg shadow mb-8">
-            <h2 class="text-xl font-bold mb-4 text-gray-700">Yangi Test Yaratish</h2>
-            <div class="grid grid-cols-3 gap-4 mb-4">
-                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border p-2 rounded focus:outline-none focus:border-indigo-600">
-                <input type="number" id="closedCount" placeholder="Yopiq savollar soni (35)" class="border p-2 rounded" value="35">
-                <input type="number" id="openCount" placeholder="Ochiq savollar soni (10)" class="border p-2 rounded" value="10">
+        <!-- Yangi test yaratish formasi -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+            <h2 class="text-lg font-bold mb-4 text-gray-700">📝 Yangi Test Yaratish va Faollashtirish</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <input type="text" id="testTitle" placeholder="Test nomi (masalan: 1-Mavzu)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full">
+                <input type="number" id="closedCount" placeholder="Yopiq savollar soni (35)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="35">
+                <input type="number" id="openCount" placeholder="Ochiq savollar soni (10)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full" value="10">
             </div>
-            <textarea id="testKeys" placeholder="To'g'ri kalitlarni probel bilan kiriting (Masalan: A B C D ... 12 15)" class="w-full border p-2 rounded mb-4 focus:outline-none focus:border-indigo-600" rows="3"></textarea>
-            <button onclick="createTest()" class="bg-green-600 text-white px-6 py-2 rounded font-bold hover:bg-green-700">Testni Saqlash va Faollashtirish 🚀</button>
+            <textarea id="testKeys" placeholder="To'g'ri kalitlarni probel bilan kiriting (Masalan: A B C D ... 12 15)" class="w-full border border-gray-200 p-3 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+            <button onclick="createTest()" class="w-full sm:w-auto bg-emerald-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-emerald-700 transition shadow-sm">Testni Saqlash va Faollashtirish 🚀</button>
         </div>
 
-        <!-- Natijalar jadvali -->
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="p-4 border-b bg-gray-50 font-bold text-gray-700">O'quvchilarning Natijalari</div>
-            <table class="min-w-full">
-                <thead class="bg-gray-50 border-b">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telegram ID</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To'g'ri / Jami</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Topshirgan vaqti</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200" id="resultsTable">
-                    <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Yuklanmoqda...</td></tr>
-                </tbody>
-            </table>
+        <!-- Natijalar bo'limi -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-5 sm:p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-2">
+                <h3 class="text-lg font-bold text-gray-700">O'quvchilar Natijalari</h3>
+                <span id="totalCount" class="text-sm bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">Jami: 0 ta</span>
+            </div>
+            <!-- Mobil ekranlar uchun jadval gorizontal o'raladi (scroll bo'ladi) -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-400 uppercase text-xs tracking-wider">
+                        <tr>
+                            <th class="px-4 sm:px-6 py-4 font-semibold">O'quvchi ID</th>
+                            <th class="px-4 sm:px-6 py-4 font-semibold">To'g'ri / Jami</th>
+                            <th class="px-4 sm:px-6 py-4 font-semibold">Foiz</th>
+                            <th class="px-4 sm:px-6 py-4 font-semibold">Topshirgan vaqti</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-600 text-sm" id="resultsTable">
+                        <tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Yuklanmoqda...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </main>
 
     <script>
-        // Supabase ulanish ma'lumotlari
         const SUPABASE_URL = "https://morimienswrvhcctnptt.supabase.co";
         const SUPABASE_KEY = "sb_publishable_1zHi0RhZgvwJulz9y3Rzhg_CAmS-uZS";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Natijalarni bazadan o'qib jadvalga chiqarish
-        async function loadResults() {
+        // Mobil sidebar ochib-yopish funksiyasi
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        async function loadData() {
             const tbody = document.getElementById('resultsTable');
-            tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Yuklanmoqda...</td></tr>`;
+            const totalCountSpan = document.getElementById('totalCount');
+            tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Yuklanmoqda...</td></tr>`;
 
             const { data, error } = await supabaseClient.from('test_results').select('*').order('id', { ascending: false });
             
             if (error) {
-                alert("Xatolik yuz berdi: " + error.message);
+                alert("Xatolik: " + error.message);
                 return;
             }
 
             if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Hozircha natijalar yo'q.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-6 text-center text-gray-400">Hozircha natijalar mavjud emas.</td></tr>`;
+                totalCountSpan.textContent = `Jami: 0 ta`;
                 return;
             }
 
+            totalCountSpan.textContent = `Jami: ${data.length} ta`;
             tbody.innerHTML = '';
+            
             data.forEach(res => {
-                tbody.innerHTML = tbody.innerHTML + `
-                    <tr>
-                        <td class="px-6 py-4 text-gray-800">${res.telegram_id}</td>
-                        <td class="px-6 py-4 font-bold text-green-600">${res.correct_count} / ${res.total}</td>
-                        <td class="px-6 py-4 text-gray-500">${new Date(res.submitted_at).toLocaleString()}</td>
+                let percent = Math.round((res.correct_count / res.total) * 100);
+                let badgeColor = percent >= 70 ? 'bg-emerald-50 text-emerald-600' : percent >= 40 ? 'bg-amber-50 text-amber-600' : 'bg-rose-50 text-rose-600';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50/50 transition">
+                        <td class="px-4 sm:px-6 py-4 font-medium text-gray-800">${res.telegram_id}</td>
+                        <td class="px-4 sm:px-6 py-4 font-bold text-gray-900">${res.correct_count} / ${res.total}</td>
+                        <td class="px-4 sm:px-6 py-4">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-bold ${badgeColor}">${percent}%</span>
+                        </td>
+                        <td class="px-4 sm:px-6 py-4 text-gray-400 text-xs sm:text-sm">${new Date(res.submitted_at).toLocaleString()}</td>
                     </tr>
                 `;
             });
         }
 
-        // Yangi test yaratish va bazaga yozish
         async function createTest() {
-            const title = document.getElementById('testTitle').value;
+            const title = document.getElementById('testTitle').value.trim();
             const closed_count = parseInt(document.getElementById('closedCount').value);
             const open_count = parseInt(document.getElementById('openCount').value);
             const keys = document.getElementById('testKeys').value.trim().split(/\s+/);
 
             if (!title || keys.length !== (closed_count + open_count)) {
-                alert(`Xato! Kalitlar soni jami savollar soniga (${closed_count + open_count} ta) mos kelishi kerak.`);
+                alert(`Xatolik! Kiritilgan kalitlar soni (${keys.length} ta) jami savollar soniga (${closed_count + open_count} ta) mos kelishi kerak.`);
                 return;
             }
 
-            // Avvalgi testlarni o'chirish yoki nofaol qilish
             await supabaseClient.from('tests').update({ is_active: false }).eq('is_active', true);
 
-            // Yangi testni qo'shish
             const { error } = await supabaseClient.from('tests').insert({
                 title: title,
                 closed_count: closed_count,
@@ -117,14 +147,14 @@
             if (error) {
                 alert("Saqlashda xatolik: " + error.message);
             } else {
-                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi! Endi o'quvchilar testni boshlashlari mumkin.");
-                document.getElementById('testKeys').value = '';
+                alert("✅ Yangi test muvaffaqiyatli yaratildi va faollashtirildi!");
                 document.getElementById('testTitle').value = '';
+                document.getElementById('testKeys').value = '';
+                loadData();
             }
         }
 
-        // Sahifa ochilishi bilan natijalarni yuklash
-        loadResults();
+        loadData();
     </script>
 </body>
 </html>
