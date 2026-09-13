@@ -334,7 +334,7 @@
         let lastStudentsError = null;
 
         async function loadStudents() {
-            const { data, error } = await supabaseClient.from('students').select('*').order('id', { ascending: false });
+            const { data, error } = await supabaseClient.from('students').select('*').order('registered_at', { ascending: false });
             if (error) {
                 console.error("O'quvchilarni yuklashda xatolik:", error.message);
                 lastStudentsError = error;
@@ -409,7 +409,7 @@
                             </span>
                         </td>
                         <td class="px-4 sm:px-5 py-3">
-                            <button onclick="toggleBlock(${st.id}, ${blocked})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${blocked ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-rose-600 hover:bg-rose-700 text-white'}">
+                            <button onclick="toggleBlock(${st.telegram_id}, ${blocked})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${blocked ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-rose-600 hover:bg-rose-700 text-white'}">
                                 ${blocked ? 'Blokdan chiqarish' : 'Bloklash'}
                             </button>
                         </td>
@@ -436,11 +436,11 @@
             document.getElementById(id).classList.toggle('hidden');
         }
 
-        async function toggleBlock(studentId, currentlyBlocked) {
+        async function toggleBlock(telegramId, currentlyBlocked) {
             const { error } = await supabaseClient
                 .from('students')
                 .update({ is_blocked: !currentlyBlocked })
-                .eq('id', studentId);
+                .eq('telegram_id', telegramId);
 
             if (error) {
                 alert("Xatolik: " + error.message);
