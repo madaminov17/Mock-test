@@ -90,11 +90,6 @@
             <div id="groupsAccordion" class="space-y-4">
                 <div class="text-center text-gray-400 py-6">Yuklanmoqda...</div>
             </div>
-
-            <details class="mt-6 bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-500">
-                <summary class="cursor-pointer font-bold text-gray-600">🔍 Diagnostika (muammo bo'lsa shu yerni oching)</summary>
-                <div id="debugPanel" class="mt-3 space-y-2 font-mono whitespace-pre-wrap break-all"></div>
-            </details>
         </div>
 
         <!-- ============ VIEW 3: NATIJALAR ============ -->
@@ -177,35 +172,6 @@
             wrap.innerHTML = `<div class="text-center text-gray-400 py-6">Yuklanmoqda...</div>`;
             await loadGroups();
             await loadStudents();
-            renderDebugPanel();
-        }
-
-        function renderDebugPanel() {
-            const panel = document.getElementById('debugPanel');
-            if (!panel) return;
-
-            let html = `<div>📁 Guruhlar soni: <b>${groupsCache.length}</b></div>`;
-            html += `<div>👤 O'quvchilar soni: <b>${studentsCache.length}</b></div>`;
-            if (lastStudentsError) {
-                html += `<div class="text-rose-600 font-bold">❌ students so'rovi xatolik qaytardi: ${lastStudentsError.message} (kod: ${lastStudentsError.code || 'yoq'})</div>`;
-            }
-            html += `<hr class="my-2">`;
-
-            html += `<div class="font-bold mb-1">Guruhlar (id / nomi / kod):</div>`;
-            groupsCache.forEach(g => {
-                html += `<div>id=${JSON.stringify(g.id)} (${typeof g.id}) — ${g.name} — kod: ${g.code || "yo'q"}</div>`;
-            });
-
-            html += `<div class="font-bold mt-3 mb-1">O'quvchilar (ism / group_id / mos guruh):</div>`;
-            if (studentsCache.length === 0) {
-                html += `<div class="text-rose-500">⚠️ studentsCache BO'SH — students jadvalidan hech narsa qaytmadi (RLS yoki key muammosi bo'lishi mumkin).</div>`;
-            }
-            studentsCache.forEach(s => {
-                const matchedGroup = groupsCache.find(g => String(g.id) === String(s.group_id));
-                html += `<div>${s.first_name || ''} ${s.last_name || ''} — group_id=${JSON.stringify(s.group_id)} (${typeof s.group_id}) — mos guruh: ${matchedGroup ? matchedGroup.name : '❌ TOPILMADI'}</div>`;
-            });
-
-            panel.innerHTML = html;
         }
 
         window.onload = function() {
@@ -331,18 +297,14 @@
         }
 
         // ---------- O'QUVCHILAR ----------
-        let lastStudentsError = null;
-
         async function loadStudents() {
             const { data, error } = await supabaseClient.from('students').select('*').order('registered_at', { ascending: false });
             if (error) {
                 console.error("O'quvchilarni yuklashda xatolik:", error.message);
-                lastStudentsError = error;
                 studentsCache = [];
                 renderGroupsAccordion();
                 return;
             }
-            lastStudentsError = null;
             studentsCache = data || [];
             renderGroupsAccordion();
         }
