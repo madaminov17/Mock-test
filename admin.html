@@ -185,7 +185,11 @@
             if (!panel) return;
 
             let html = `<div>📁 Guruhlar soni: <b>${groupsCache.length}</b></div>`;
-            html += `<div>👤 O'quvchilar soni: <b>${studentsCache.length}</b></div><hr class="my-2">`;
+            html += `<div>👤 O'quvchilar soni: <b>${studentsCache.length}</b></div>`;
+            if (lastStudentsError) {
+                html += `<div class="text-rose-600 font-bold">❌ students so'rovi xatolik qaytardi: ${lastStudentsError.message} (kod: ${lastStudentsError.code || 'yoq'})</div>`;
+            }
+            html += `<hr class="my-2">`;
 
             html += `<div class="font-bold mb-1">Guruhlar (id / nomi / kod):</div>`;
             groupsCache.forEach(g => {
@@ -327,12 +331,18 @@
         }
 
         // ---------- O'QUVCHILAR ----------
+        let lastStudentsError = null;
+
         async function loadStudents() {
             const { data, error } = await supabaseClient.from('students').select('*').order('id', { ascending: false });
             if (error) {
                 console.error("O'quvchilarni yuklashda xatolik:", error.message);
+                lastStudentsError = error;
+                studentsCache = [];
+                renderGroupsAccordion();
                 return;
             }
+            lastStudentsError = null;
             studentsCache = data || [];
             renderGroupsAccordion();
         }
