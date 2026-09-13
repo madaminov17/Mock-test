@@ -278,7 +278,7 @@
         }
 
         function groupNameById(id) {
-            const g = groupsCache.find(g => g.id === id);
+            const g = groupsCache.find(g => String(g.id) === String(id));
             return g ? g.name : 'Guruhsiz';
         }
 
@@ -316,7 +316,7 @@
 
             wrap.innerHTML = '';
             groupsCache.forEach(g => {
-                const groupStudents = studentsCache.filter(s => s.group_id === g.id);
+                const groupStudents = studentsCache.filter(s => String(s.group_id) === String(g.id));
                 const accId = `group-body-${g.id}`;
                 const codeBadge = g.code
                     ? `<button onclick="event.stopPropagation(); copyCode('${g.code}')" class="text-xs bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full font-bold border border-amber-200 hover:bg-amber-100 transition" title="Nusxalash uchun bosing">🔑 ${g.code} 📋</button>`
@@ -337,7 +337,7 @@
                 `;
             });
 
-            const unassigned = studentsCache.filter(s => !groupsCache.find(g => g.id === s.group_id));
+            const unassigned = studentsCache.filter(s => s.group_id == null || !groupsCache.find(g => String(g.id) === String(s.group_id)));
             if (unassigned.length > 0) {
                 wrap.innerHTML += `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
