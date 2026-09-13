@@ -27,7 +27,7 @@
         </div>
         <nav class="space-y-2">
             <button data-view="create" onclick="showView('create')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">📝 Test yaratish</button>
-            <button data-view="students" onclick="showView('students')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">👥 O'quvchilarim</button>
+            <button data-view="groups" onclick="showView('groups')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">👥 Guruhlar</button>
             <button data-view="results" onclick="showView('results')" class="nav-btn w-full text-left block py-2.5 px-4 rounded-lg font-medium transition">🏆 Natijalar</button>
         </nav>
     </aside>
@@ -74,19 +74,22 @@
             </div>
         </div>
 
-        <!-- ============ VIEW 2: O'QUVCHILARIM ============ -->
-        <div id="view-students" class="view-section hidden">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">👥 O'quvchilarim</h1>
+        <!-- ============ VIEW 2: GURUHLAR ============ -->
+        <div id="view-groups" class="view-section hidden">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-6">👥 Guruhlar</h1>
 
             <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 mb-6">
                 <h2 class="text-sm font-bold mb-3 text-gray-700">Yangi guruh qo'shish</h2>
+                <p class="text-xs text-gray-400 mb-3">Guruh yaratilganda avtomatik kod beriladi. Shu kodni o'quvchilaringizga bering — ular ro'yxatdan o'tishda kodni kiritib, avtomatik shu guruhga qo'shiladi.</p>
                 <div class="flex flex-col sm:flex-row gap-3">
                     <input type="text" id="groupName" placeholder="Guruh nomi (masalan: Nukus Fiz-Mat 10-sinf)" class="border border-gray-200 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 flex-1">
                     <button onclick="createGroup()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-sm">Guruh qo'shish ➕</button>
                 </div>
             </div>
 
-            <div id="groupsAccordion" class="space-y-4"></div>
+            <div id="groupsAccordion" class="space-y-4">
+                <div class="text-center text-gray-400 py-6">Yuklanmoqda...</div>
+            </div>
         </div>
 
         <!-- ============ VIEW 3: NATIJALAR ============ -->
@@ -157,12 +160,23 @@
                 backToTestsList();
                 loadTestsList();
             }
+
+            if (name === 'groups') {
+                refreshGroupsView();
+            }
+        }
+
+        // Guruhlar sahifasiga har safar kirilganda bazadan yangi ma'lumot tortib olinadi
+        async function refreshGroupsView() {
+            const wrap = document.getElementById('groupsAccordion');
+            wrap.innerHTML = `<div class="text-center text-gray-400 py-6">Yuklanmoqda...</div>`;
+            await loadGroups();
+            await loadStudents();
         }
 
         window.onload = function() {
             generateKeyInputs();
             loadGroups().then(() => {
-                loadStudents();
                 renderGroupCheckboxes();
             });
             loadActiveTestBanner();
@@ -205,30 +219,62 @@
         }
 
         // ---------- GURUHLAR ----------
+        function generateGroupCode(length = 6) {
+            // Chalkash bo'lishi mumkin bo'lgan belgilar (0/O, 1/I) chiqarib tashlandi
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < length; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
         async function createGroup() {
             const name = document.getElementById('groupName').value.trim();
             if (!name) {
                 alert("Iltimos, guruh nomini kiriting!");
                 return;
             }
-            const { error } = await supabaseClient.from('groups').insert({ name: name });
+            const code = generateGroupCode();
+            const { error } = await supabaseClient.from('groups').insert({ name: name, code: code });
             if (error) {
-                alert("Xatolik: " + error.message);
+                alert("Guruh yaratishda xatolik: " + error.message + "\n\nEslatma: agar xatolik 'code' ustuni haqida bo'lsa, Supabase'da quyidagi SQL'ni ishga tushiring:\nalter table groups add column code text unique;");
             } else {
                 document.getElementById('groupName').value = '';
                 await loadGroups();
                 renderGroupCheckboxes();
-                renderGroupsAccordion();
             }
+        }
+
+        async function assignCode(groupId) {
+            const code = generateGroupCode();
+            const { error } = await supabaseClient.from('groups').update({ code: code }).eq('id', groupId);
+            if (error) {
+                alert("Kod yaratishda xatolik: " + error.message);
+            } else {
+                await loadGroups();
+                renderGroupCheckboxes();
+            }
+        }
+
+        function copyCode(code) {
+            navigator.clipboard.writeText(code).then(() => {
+                alert(`✅ Kod nusxalandi: ${code}\nBuni o'quvchiga yuboring.`);
+            }).catch(() => {
+                alert(`Kod: ${code}`);
+            });
         }
 
         async function loadGroups() {
             const { data, error } = await supabaseClient.from('groups').select('*').order('id', { ascending: true });
+            const wrap = document.getElementById('groupsAccordion');
             if (error) {
                 console.error("Guruhlarni yuklashda xatolik:", error.message);
+                wrap.innerHTML = `<div class="text-center text-rose-500 py-6">Guruhlarni yuklashda xatolik: ${error.message}</div>`;
                 return;
             }
             groupsCache = data || [];
+            renderGroupsAccordion();
         }
 
         function groupNameById(id) {
@@ -239,7 +285,7 @@
         function renderGroupCheckboxes() {
             const container = document.getElementById('groupCheckboxes');
             if (groupsCache.length === 0) {
-                container.innerHTML = `<span class="text-gray-400 text-sm">Hozircha guruhlar mavjud emas. Avval "O'quvchilarim" bo'limida guruh qo'shing.</span>`;
+                container.innerHTML = `<span class="text-gray-400 text-sm">Hozircha guruhlar mavjud emas. Avval "Guruhlar" bo'limida guruh qo'shing.</span>`;
                 return;
             }
             container.innerHTML = groupsCache.map(g => `
@@ -272,11 +318,17 @@
             groupsCache.forEach(g => {
                 const groupStudents = studentsCache.filter(s => s.group_id === g.id);
                 const accId = `group-body-${g.id}`;
+                const codeBadge = g.code
+                    ? `<button onclick="event.stopPropagation(); copyCode('${g.code}')" class="text-xs bg-amber-50 text-amber-700 px-3 py-1.5 rounded-full font-bold border border-amber-200 hover:bg-amber-100 transition" title="Nusxalash uchun bosing">🔑 ${g.code} 📋</button>`
+                    : `<button onclick="event.stopPropagation(); assignCode(${g.id})" class="text-xs bg-gray-100 text-gray-500 px-3 py-1.5 rounded-full font-bold hover:bg-gray-200 transition">Kod yaratish</button>`;
                 wrap.innerHTML += `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                        <button onclick="toggleAccordion('${accId}')" class="w-full flex justify-between items-center p-4 sm:p-5 text-left">
+                        <button onclick="toggleAccordion('${accId}')" class="w-full flex justify-between items-center p-4 sm:p-5 text-left flex-wrap gap-2">
                             <span class="font-bold text-gray-700">📁 ${g.name}</span>
-                            <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">${groupStudents.length} ta o'quvchi</span>
+                            <span class="flex items-center gap-2">
+                                ${codeBadge}
+                                <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-medium">${groupStudents.length} ta o'quvchi</span>
+                            </span>
                         </button>
                         <div id="${accId}" class="hidden border-t border-gray-100 overflow-x-auto">
                             ${renderStudentsTable(groupStudents)}
